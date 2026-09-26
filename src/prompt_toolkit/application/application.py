@@ -926,6 +926,8 @@ class Application(Generic[_AppResult]):
             for instance in ptpython.
         :param handle_sigint: Handle SIGINT signal. Call the key binding for
             `Keys.SIGINT`. (This only works in the main thread.)
+        :param inputhook: Optional input hook to install in the event loop
+            that is created for this run.
         """
         if in_thread:
             result: _AppResult

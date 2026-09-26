@@ -21,7 +21,7 @@ As a consequence, we will "trampoline" back and forth between two event loops.
 
 .. code:: python
 
-    from prompt_toolkit.eventloop.inputhook import set_eventloop_with_inputhook
+    from prompt_toolkit.shortcuts import PromptSession
 
     def inputhook(inputhook_context):
         # At this point, we run the other loop. This loop is supposed to run
@@ -35,7 +35,9 @@ As a consequence, we will "trampoline" back and forth between two event loops.
         while True:
             ...
 
-    set_eventloop_with_inputhook(inputhook)
+    session = PromptSession(inputhook=inputhook)
+    session.prompt()
 
-    # Any asyncio code at this point will now use this new loop, with input
-    # hook installed.
+The input hook can also be passed to :meth:`prompt_toolkit.application.Application.run`.
+In both cases, prompt_toolkit creates the event loop when the application or
+prompt is started. There is no need to install an event loop globally upfront.

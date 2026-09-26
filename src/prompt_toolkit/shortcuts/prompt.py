@@ -326,6 +326,8 @@ class PromptSession(Generic[_T]):
         with a frame.
     :param refresh_interval: (number; in seconds) When given, refresh the UI
         every so many seconds.
+    :param inputhook: Callable to be used as input hook. This is passed to
+        :meth:`Application.run` when the prompt is started.
     :param input: `Input` object. (Note that the preferred way to change the
         input/output is by creating an `AppSession`.)
     :param output: `Output` object.
@@ -419,6 +421,7 @@ class PromptSession(Generic[_T]):
         tempfile: str | Callable[[], str] | None = None,
         refresh_interval: float = 0,
         show_frame: FilterOrBool = False,
+        inputhook: InputHook | None = None,
         input: Input | None = None,
         output: Output | None = None,
         interrupt_exception: type[BaseException] = KeyboardInterrupt,
@@ -473,6 +476,7 @@ class PromptSession(Generic[_T]):
         self.tempfile_suffix = tempfile_suffix
         self.tempfile = tempfile
         self.show_frame = show_frame
+        self.inputhook = inputhook
         self.interrupt_exception = interrupt_exception
         self.eof_exception = eof_exception
 
@@ -1057,9 +1061,16 @@ class PromptSession(Generic[_T]):
 
         # If we are using the default output, and have a dumb terminal. Use the
         # dumb prompt.
+        if inputhook is None:
+            inputhook = self.inputhook
+
         if self._output is None and is_dumb_terminal():
             with self._dumb_prompt(self.message) as dump_app:
-                return dump_app.run(in_thread=in_thread, handle_sigint=handle_sigint)
+                return dump_app.run(
+                    in_thread=in_thread,
+                    handle_sigint=handle_sigint,
+                    inputhook=inputhook,
+                )
 
         return self.app.run(
             set_exception_handler=set_exception_handler,
