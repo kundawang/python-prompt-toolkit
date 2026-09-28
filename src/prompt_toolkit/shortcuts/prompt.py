@@ -423,6 +423,7 @@ class PromptSession(Generic[_T]):
         output: Output | None = None,
         interrupt_exception: type[BaseException] = KeyboardInterrupt,
         eof_exception: type[BaseException] = EOFError,
+        inputhook: InputHook | None = None,
     ) -> None:
         history = history or InMemoryHistory()
         clipboard = clipboard or InMemoryClipboard()
@@ -475,6 +476,7 @@ class PromptSession(Generic[_T]):
         self.show_frame = show_frame
         self.interrupt_exception = interrupt_exception
         self.eof_exception = eof_exception
+        self.inputhook = inputhook
 
         # Create buffers, layout and Application.
         self.history = history
@@ -955,6 +957,12 @@ class PromptSession(Generic[_T]):
         :param in_thread: Run the prompt in a background thread; block the
             current thread. This avoids interference with an event loop in the
             current thread. Like `Application.run(in_thread=True)`.
+        :param inputhook: Input hook to be used while the prompt is active.
+            When given, this overrides the `inputhook` that was passed to the
+            `PromptSession` constructor. The input hook is called whenever the
+            asyncio event loop is idle, and is supposed to run an external
+            event loop (e.g. a GUI toolkit loop) until input is ready. See
+            :class:`~prompt_toolkit.eventloop.InputHookContext`.
 
         This method will raise ``KeyboardInterrupt`` when control-c has been
         pressed (for abort) and ``EOFError`` when control-d has been pressed
@@ -1055,11 +1063,18 @@ class PromptSession(Generic[_T]):
         )
         self.app.refresh_interval = self.refresh_interval  # This is not reactive.
 
+        if inputhook is None:
+            inputhook = self.inputhook
+
         # If we are using the default output, and have a dumb terminal. Use the
         # dumb prompt.
         if self._output is None and is_dumb_terminal():
             with self._dumb_prompt(self.message) as dump_app:
-                return dump_app.run(in_thread=in_thread, handle_sigint=handle_sigint)
+                return dump_app.run(
+                    in_thread=in_thread,
+                    handle_sigint=handle_sigint,
+                    inputhook=inputhook,
+                )
 
         return self.app.run(
             set_exception_handler=set_exception_handler,

@@ -926,6 +926,13 @@ class Application(Generic[_AppResult]):
             for instance in ptpython.
         :param handle_sigint: Handle SIGINT signal. Call the key binding for
             `Keys.SIGINT`. (This only works in the main thread.)
+        :param inputhook: Optional input hook to be called whenever the asyncio
+            event loop is idle. This is supposed to run an external event loop
+            (like a GUI toolkit loop) until input is ready. When given, a new
+            event loop is created with this hook installed; nothing is bound
+            at import or initialization time, so this works fine inside
+            `asyncio.run()` or any other event loop. See
+            :class:`~prompt_toolkit.eventloop.InputHookContext`.
         """
         if in_thread:
             result: _AppResult

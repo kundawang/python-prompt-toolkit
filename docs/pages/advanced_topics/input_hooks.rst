@@ -21,7 +21,7 @@ As a consequence, we will "trampoline" back and forth between two event loops.
 
 .. code:: python
 
-    from prompt_toolkit.eventloop.inputhook import set_eventloop_with_inputhook
+    from prompt_toolkit.shortcuts import PromptSession
 
     def inputhook(inputhook_context):
         # At this point, we run the other loop. This loop is supposed to run
@@ -35,7 +35,22 @@ As a consequence, we will "trampoline" back and forth between two event loops.
         while True:
             ...
 
-    set_eventloop_with_inputhook(inputhook)
+    session = PromptSession(inputhook=inputhook)
+    session.prompt()
 
-    # Any asyncio code at this point will now use this new loop, with input
-    # hook installed.
+The input hook can also be passed to an individual
+:meth:`~prompt_toolkit.shortcuts.PromptSession.prompt` call or to
+:meth:`~prompt_toolkit.application.Application.run`. In all cases, the event
+loop with the input hook installed is only created when the application
+starts running; nothing is bound at import or initialization time, so this
+works regardless of how the surrounding asyncio event loop is managed (for
+instance when using :func:`asyncio.run`).
+
+.. note::
+
+    The older
+    :func:`~prompt_toolkit.eventloop.set_eventloop_with_inputhook` function,
+    which installs a global event loop up front, is deprecated. It doesn't
+    work reliably since ``asyncio.get_event_loop()`` was deprecated, because
+    the pre-installed loop is ignored by :func:`asyncio.run` and by code
+    running in another event loop. Pass the ``inputhook`` parameter instead.
